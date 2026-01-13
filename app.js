@@ -1,56 +1,20 @@
 import express from "express";
+import 'dotenv/config';
+import connectDB from "./database/db.js";
 
 const app = express();
 
+// connect to the database
+await connectDB();
+
+// middleware
 app.use(express.json());
 
-const books = [
-  {
-    id: 1,
-    name: "book 1",
-    isPublished: true,
-  },
-  {
-    id: 2,
-    name: "book 2",
-    isPublished: false,
-  },
-  {
-    id: 3,
-    name: "book 3",
-    isPublished: true,
-  },
-  {
-    id: 4,
-    name: "book 4",
-    isPublished: false,
-  },
-];
-
-app.get("/", (req, res) => {
-  res.send("The book store app");
+app.get('/', (req,res) => {
+  res.send("Hello express");
 });
 
-app.get("/books", (req, res) => {
-  res.json({ books });
-});
-
-app.get("/books/:id", (req, res) => {
-  const { id } = req.params;
-
-  const book = books.find((book) => {
-    return book.id === parseInt(id);
-  });
-  if (!book) {
-    return res.status(404).json({
-      message: "Book not found",
-      success: false,
-    });
-  }
-  res.json({ book });
-});
-
-const port = 3000;
+const port = process.env.PORT || 4000;
 
 app.listen(port, () => {
   console.log(`server is running on http://localhost:${port}`);
