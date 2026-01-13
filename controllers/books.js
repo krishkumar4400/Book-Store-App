@@ -3,9 +3,11 @@ import Book from "../Models/Book.js";
 export const getAllBooks = async (req, res) => {
   try {
     const books = await Book.find();
-    if (!books) {
-      return res.status(404).json({
-        success: false,
+    if (books.length === 0) {
+      return res.status(200).json({
+        success: true,
+        books,
+        message: "No books found",
       });
     }
 
@@ -15,6 +17,10 @@ export const getAllBooks = async (req, res) => {
     });
   } catch (error) {
     console.error(error.message);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -22,8 +28,8 @@ export const getBookById = async (req, res) => {
   try {
     const { id } = req.params;
     if (!id) {
-      return res.status(404).json({
-        message: "Book id not found",
+      return res.status(400).json({
+        message: "Book id is required",
         success: false,
       });
     }
@@ -31,7 +37,7 @@ export const getBookById = async (req, res) => {
     const book = await Book.findById(id);
     if (!book) {
       return res.status(404).json({
-        message: "invalid book id",
+        message: "book not found",
         success: false,
       });
     }
@@ -42,6 +48,9 @@ export const getBookById = async (req, res) => {
     });
   } catch (error) {
     console.error(error.message);
+    res.status(500).json({
+      message: "Invalid MongoDB ID format",
+    });
   }
 };
 
@@ -50,8 +59,8 @@ export const addBook = async (req, res) => {
     const { title, author, year } = req.body;
 
     if (!title || !author || !year) {
-      return res.status(404).json({
-        message: "missing details",
+      return res.status(400).json({
+        message: "All fields are required",
         success: false,
       });
     }
@@ -75,29 +84,41 @@ export const addBook = async (req, res) => {
     }
   } catch (error) {
     console.error(error.message);
+    res.status(500),
+      json({
+        success: false,
+        message: error.message,
+      });
   }
 };
 
 export const updateBook = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!id) {
+
+    const updatedBook = await Book.findByIdAndUpdate(id, req.body, {
+      new: true, // updated document return
+      runValidators: true,
+    });
+
+    if (!updatedBook) {
       return res.status(404).json({
-        message: "Book is is not found",
+        message: "Book not found",
         success: false,
       });
     }
 
-    let book = await Book.findByIdAndUpdate(id, req.body);
-
-    if (book) {
-      res.status(200).json({
-        message: "Book updated successfully",
-        success: true,
-      });
-    }
+    res.status(200).json({
+      message: "Book updated successfully",
+      success: true,
+      updatedBook,
+    });
   } catch (error) {
     console.error(error.message);
+    res.status(500).json({
+      message: error.message,
+      success: false,
+    });
   }
 };
 
@@ -105,14 +126,14 @@ export const deleteBook = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!id) {
+    const deletedBook = await Book.findByIdAndDelete(id);
+
+    if (!deletedBook) {
       return res.status(404).json({
-        message: "Book id is not provided",
+        message: "Book not found",
         success: false,
       });
     }
-
-    await Book.findByIdAndDelete(id);
 
     res.status(200).json({
       message: "Book deleted successfully",
@@ -120,5 +141,9 @@ export const deleteBook = async (req, res) => {
     });
   } catch (error) {
     console.error(error.message);
+    res.status(500).json({
+      message: error.message,
+      success: false,
+    });
   }
 };
